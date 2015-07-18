@@ -1,0 +1,12 @@
+name: HiddenStorage
+description: Make any block to a hidden storage.
+version: 0.1
+authors: [KaskadekingDE]
+website: https://github.com/KaskadekingDE/HiddenStorage
+
+main: de.KaskadekingDE.HiddenStorage.Main
+commands:
+  hiddenstorage:
+    description: Main Command
+    usage: /hiddenstorage <args>
+    aliases: [hs]
