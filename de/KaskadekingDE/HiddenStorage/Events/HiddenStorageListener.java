@@ -89,7 +89,7 @@ public class HiddenStorageListener implements Listener {
             Player p = (Player) e.getPlayer();
             HiddenStorage hs = HiddenStorage.StorageByLocation(bh.getBlock().getLocation(), p, false);
             if(Helper.InventoryEmpty(e.getInventory())) {
-                if(!hs.EqualsOwner(p) && !Permissions.hasPermission(p, "hiddenstorage.protection.bypass")) {
+                if(!hs.EqualsOwner(p)) {
                     p.sendMessage("§a[§bHiddenStorage§a] §eThe hidden storage of " + hs.Owner.getName() + " has been removed because it's empty.");
                 } else {
                     p.sendMessage("§a[§bHiddenStorage§a] §eYour hidden storage has been removed because it's empty.");
