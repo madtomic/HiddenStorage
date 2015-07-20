@@ -15,9 +15,17 @@ public class Helper {
     }
 
     public static ChestState GetChestType(Location loc) {
-        if(HiddenStorage.HSByLocation(loc) != null)
+        if(HiddenStorage.StorageByLocation(loc, null, false) != null)
             return ChestState.HiddenStorage;
         return ChestState.Default;
+    }
+
+    public static boolean IsNumeric(String str) {
+        for (char c : str.toCharArray())
+        {
+            if (!Character.isDigit(c)) return false;
+        }
+        return true;
     }
 
     public static Inventory InventoryFromItemStack(ItemStack[] stack)
@@ -55,5 +63,20 @@ public class Helper {
                 newInv.addItem(item);
             }
         }
+    }
+
+    public static boolean InventoryEmpty(Inventory inv) {
+        for(ItemStack is: inv.getContents()) {
+            if(is != null)
+                return false;
+        }
+        return true;
+    }
+
+    public static String LocationToString(Location loc, boolean appendWorld) {
+        String result =  "X: " + loc.getBlockX() + " Y: " + loc.getBlockY() + " Z: " + loc.getBlockZ();
+        if(appendWorld)
+            result += " World: " + loc.getWorld().getName();
+        return result;
     }
 }

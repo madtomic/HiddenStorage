@@ -1,7 +1,9 @@
 package de.KaskadekingDE.HiddenStorage.Events;
 
 import de.KaskadekingDE.HiddenStorage.Classes.Helper;
+import de.KaskadekingDE.HiddenStorage.Classes.HiddenStorage.ChestManager.HiddenStorageManager;
 import de.KaskadekingDE.HiddenStorage.Classes.HiddenStorage.HiddenStorage;
+import de.KaskadekingDE.HiddenStorage.Classes.Permissions;
 import de.KaskadekingDE.HiddenStorage.Main;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -17,6 +19,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Iterator;
+import java.util.List;
 
 public class ChestProtector implements Listener {
 
@@ -66,12 +69,12 @@ public class ChestProtector implements Listener {
         Inventory inv = null;
         while(iter.hasNext()) {
             Block b = iter.next();
-            HiddenStorage hs = HiddenStorage.HSByLocation(b.getLocation());
-            if(hs != null && Main.ProtectFromExplosions) {
+            HiddenStorage hs = HiddenStorage.StorageByLocation(b.getLocation(), null, false);
+            if(hs != null && Main.HiddenStorageConfiguration.ProtectFromExplosions) {
                 iter.remove();
-            } else if(hs != null && !Main.ProtectFromExplosions) {
+            } else if(hs != null && !Main.HiddenStorageConfiguration.ProtectFromExplosions) {
                 inv = hs.StorageInventory;
-                if(hs.Owner.isOnline() && Main.NotifyUser) {
+                if(hs.Owner.isOnline() && Main.HiddenStorageConfiguration.NotifyUser) {
                     hs.Owner.getPlayer().sendMessage("§a[§bHiddenStorage§a] §cOne of your hidden storages has been destroyed!");
                 }
                 for(int i = 0; i < inv.getViewers().size(); i++) {
@@ -94,30 +97,34 @@ public class ChestProtector implements Listener {
     public void onBlockBreak(BlockBreakEvent e) {
         Block block = e.getBlock();
         Location loc = block.getLocation();
-        Helper.ChestState state = Helper.GetChestType(loc);
-        if(state == Helper.ChestState.HiddenStorage) {
-            HiddenStorage hs = HiddenStorage.HSByLocation(loc);
-            if(!Main.AllowBreakingFromOthers && !hs.EqualsOwner(e.getPlayer())) {
-                e.setCancelled(true);
-                return;
-            }
-            if(!hs.EqualsOwner(e.getPlayer())) {
-                e.getPlayer().sendMessage("§a[§bHiddenStorage§a] §eYou found a hidden storage from " + hs.Owner.getName());
-            }
-            for(HumanEntity viewer: hs.StorageInventory.getViewers()) {
-                viewer.closeInventory();
-            }
-            for (ItemStack i : hs.StorageInventory.getContents())
-            {
-                if(i != null) {
-                    hs.StorageLocation.getWorld().dropItemNaturally(hs.StorageLocation, i);
+        List<HiddenStorage> hiddenStorageList = HiddenStorageManager.GetByLocationList(loc, e.getPlayer());
+        if(hiddenStorageList.size() > 0) {
+            for(HiddenStorage hs: hiddenStorageList) {
+                if(!Main.HiddenStorageConfiguration.AllowBreakingFromOthers && !hs.EqualsOwner(e.getPlayer()) && !Permissions.hasPermission(e.getPlayer(), "hiddenstorage.protection.bypass")) {
+                    e.setCancelled(true);
+                    return;
                 }
+                if(!hs.EqualsOwner(e.getPlayer())) {
+                    e.getPlayer().sendMessage("§a[§bHiddenStorage§a] §eYou found a hidden storage of " + hs.Owner.getName());
+                }
+                for(HumanEntity viewer: hs.StorageInventory.getViewers()) {
+                    viewer.closeInventory();
+                }
+                for (ItemStack i : hs.StorageInventory.getContents())
+                {
+                    if(i != null) {
+                        hs.StorageLocation.getWorld().dropItemNaturally(hs.StorageLocation, i);
+                    }
+                }
+                if(Main.HiddenStorageConfiguration.NotifyUser && hs.Owner.isOnline()) {
+                    if(!hs.EqualsOwner(e.getPlayer())) {
+                        hs.Owner.getPlayer().sendMessage("§a[§bHiddenStorage§a] §cOne of your hidden storages has been destroyed!");
+                    } else {
+                        hs.Owner.getPlayer().sendMessage("§a[§bHiddenStorage§a] §eYour hidden storage has been removed!");
+                    }
+                }
+                hs.RemoveChest();
             }
-            if(Main.NotifyUser && hs.Owner.isOnline() && !hs.EqualsOwner(e.getPlayer())) {
-                hs.Owner.getPlayer().sendMessage("§a[§bHiddenStorage§a] §cOne of your hidden storages has been destroyed!");
-            }
-            hs.RemoveChest();
-
         }
     }
 }

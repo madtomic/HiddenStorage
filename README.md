@@ -6,7 +6,7 @@ Coming soon on Spigot ;)
 
 Version
 ----
-0.1 Alpha
+0.3 Alpha
 License
 ----
 MIT
