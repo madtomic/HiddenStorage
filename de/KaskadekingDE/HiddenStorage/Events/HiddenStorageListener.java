@@ -1,10 +1,13 @@
 package de.KaskadekingDE.HiddenStorage.Events;
 
+import com.intellectualcrafters.plot.commands.Help;
 import de.KaskadekingDE.HiddenStorage.Classes.BlockHolder;
 import de.KaskadekingDE.HiddenStorage.Classes.Helper;
+import de.KaskadekingDE.HiddenStorage.Classes.HiddenStorage.ChestManager.HiddenStorageManager;
 import de.KaskadekingDE.HiddenStorage.Classes.HiddenStorage.HiddenStorage;
 import de.KaskadekingDE.HiddenStorage.Classes.Permissions;
 import de.KaskadekingDE.HiddenStorage.Main;
+import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -42,9 +45,22 @@ public class HiddenStorageListener implements Listener {
                             return;
                         }
                     }
+                    if(Main.HiddenStorageConfiguration.UseVault && HiddenStorageManager.GetUsedBoughtStorages(p).size() >= HiddenStorageManager.TotalBoughtStorages(p)) {
+                        EconomyResponse r = Main.Economy.withdrawPlayer(p, Helper.GetPrice(p));
+                        String price = Main.Economy.format(Helper.GetPrice(p));
+                        if(r.transactionSuccess()) {
+                            p.sendMessage("§a[§bHiddenStorage§a] §e" + price + " has been taken from your account!");
+                            HiddenStorage.BuyStorage(p);
+                        } else {
+                            p.sendMessage("§a[§bHiddenStorage§a] §cFailed to take " + price + " from your account! Error: " + r.errorMessage);
+                            PlayersInQueue.remove(p);
+                            e.setCancelled(true);
+                            return;
+                        }
+                    }
                     BlockHolder bh = new BlockHolder("Hidden Storage", 54, b);
                     Inventory inv = bh.getInventory();
-                    HiddenStorage hs = new HiddenStorage(p, loc, inv);
+                    HiddenStorage hs = new HiddenStorage(p, loc, inv, Main.HiddenStorageConfiguration.UseVault);
                     hs.SaveHiddenStorage();
                     p.sendMessage("§a[§bHiddenStorage§a] §eBlock at " + Helper.LocationToString(loc, false) + " is now a hidden storage!");
                     PlayersInQueue.remove(p);
@@ -100,8 +116,25 @@ public class HiddenStorageListener implements Listener {
     }
 
     private boolean checkRequirements(Player p, Location loc) {
+        if(Main.HiddenStorageConfiguration.RevertWhitelist) {
+            if(Main.HiddenStorageConfiguration.AllowedWorlds.contains(loc.getWorld().getName()) || Main.HiddenStorageConfiguration.AllowedWorlds.contains("*")) {
+                p.sendMessage("§a[§bHiddenStorage§a] §cYou're not allowed to set a hidden storage in this world!");
+                return false;
+            }
+        } else {
+            if(!Main.HiddenStorageConfiguration.AllowedWorlds.contains(loc.getWorld().getName()) && !Main.HiddenStorageConfiguration.AllowedWorlds.contains("*")) {
+                p.sendMessage("§a[§bHiddenStorage§a] §cYou're not allowed to set a hidden storage in this world!");
+                return false;
+            }
+        }
         if(!Main.RegionManager.checkAccess(p, loc, loc.getBlock().getType())) {
             p.sendMessage("§a[§bHiddenStorage§a] §eThis region is protected! You can't set here a hidden storage.");
+            return false;
+        }
+        String price = Main.Economy.format(Main.HiddenStorageConfiguration.Price);
+        if(Main.HiddenStorageConfiguration.UseVault && HiddenStorageManager.GetUsedBoughtStorages(p).size() >= HiddenStorageManager.TotalBoughtStorages(p) && Main.Economy.getBalance(p) < Helper.GetPrice(p)) {
+            String balance = Main.Economy.format(Main.Economy.getBalance(p));
+            p.sendMessage("§a[§bHiddenStorage§a] §cA hidden storage costs " + price + ". You only have " + balance);
             return false;
         }
         return true;

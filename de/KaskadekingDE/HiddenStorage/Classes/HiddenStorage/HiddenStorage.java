@@ -18,22 +18,42 @@ public class HiddenStorage implements Comparable<HiddenStorage> {
     public Inventory StorageInventory;
     public Location StorageLocation;
     public OfflinePlayer Owner;
+    public boolean BoughtChest;
 
-    public HiddenStorage(Player owner, Location loc, Inventory inv) {
+    public HiddenStorage(Player owner, Location loc, Inventory inv, boolean boughtChest) {
         Owner = owner;
         StorageInventory = inv;
         StorageLocation = new Location(loc.getWorld(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
+        BoughtChest = boughtChest;
         HiddenStorageManager.Add(this);
     }
 
-    public HiddenStorage(OfflinePlayer owner, Location loc, Inventory inv) {
+    public HiddenStorage(OfflinePlayer owner, Location loc, Inventory inv, boolean boughtChest) {
         Owner = owner;
         StorageInventory = inv;
         StorageLocation = new Location(loc.getWorld(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
+        BoughtChest = boughtChest;
         HiddenStorageManager.Add(this);
     }
 
-    public static void CreateHiddenStorage(OfflinePlayer owner, Location loc, Inventory inv) { new HiddenStorage(owner, loc, inv); }
+    public static void CreateHiddenStorage(OfflinePlayer owner, Location loc, Inventory inv, boolean boughtChest) { new HiddenStorage(owner, loc, inv, boughtChest); }
+
+    public static void BuyStorage(Player p) {
+        if(!Main.HiddenStorageConfiguration.ReuseBoughtHiddenStorages) return;
+        int bought = Main.HiddenStorageConfiguration.playerData.getPlayerConfig().getInt("players." + p.getUniqueId() + ".bought-chests", 0);
+        bought++;
+        Main.HiddenStorageConfiguration.playerData.getPlayerConfig().set("players." + p.getUniqueId() + ".bought-chests", bought);
+        Main.HiddenStorageConfiguration.playerData.savePlayerConfig();
+    }
+
+    public static void RemoveBoughtStorage(Player p) {
+        if(!Main.HiddenStorageConfiguration.ReuseBoughtHiddenStorages) return;
+        int bought = Main.HiddenStorageConfiguration.playerData.getPlayerConfig().getInt("players." + p.getUniqueId() + ".bought-chests", 0);
+        if(bought == 0) return;
+        bought--;
+        Main.HiddenStorageConfiguration.playerData.getPlayerConfig().set("players." + p.getUniqueId() + ".bought-chests", bought);
+        Main.HiddenStorageConfiguration.playerData.savePlayerConfig();
+    }
 
     public void SaveHiddenStorage() {
         int id = GetId();
@@ -48,6 +68,7 @@ public class HiddenStorage implements Comparable<HiddenStorage> {
         Main.HiddenStorageConfiguration.playerData.getPlayerConfig().set("players." + Owner.getUniqueId() + ".hidden-storages." + id + ".z", StorageLocation.getBlockZ());
         Main.HiddenStorageConfiguration.playerData.getPlayerConfig().set("players." + Owner.getUniqueId() + ".hidden-storages." + id + ".world", StorageLocation.getWorld().getName());
         Main.HiddenStorageConfiguration.playerData.getPlayerConfig().set("players." + Owner.getUniqueId() + ".hidden-storages." + id + ".inventory", base);
+        Main.HiddenStorageConfiguration.playerData.getPlayerConfig().set("players." + Owner.getUniqueId() + ".hidden-storages." + id + ".bought", BoughtChest);
         Main.HiddenStorageConfiguration.playerData.savePlayerConfig();
     }
 
@@ -78,10 +99,17 @@ public class HiddenStorage implements Comparable<HiddenStorage> {
     }
 
     public int GetId() {
-        int maxStorages = Permissions.getPermissionNumber(Owner.getPlayer(), "hiddenstorage.set.maximum");
-        if(maxStorages == -1) {
-            maxStorages = Main.HiddenStorageConfiguration.MaximumHiddenStorages;
+        int maxStorages = 0;
+        if(Owner.isOnline()) {
+            maxStorages = Permissions.getPermissionNumber(Owner.getPlayer(), "hiddenstorage.set.maximum");
+            if(maxStorages == -1) {
+                maxStorages = Main.HiddenStorageConfiguration.MaximumHiddenStorages;
+            }
+        } else{
+            maxStorages = GetUsedHiddenStorages();
         }
+
+
         if(Main.HiddenStorageConfiguration.playerData.getPlayerConfig().contains("players." + Owner.getUniqueId()) && Main.HiddenStorageConfiguration.playerData.getPlayerConfig().contains("players." + Owner.getUniqueId() + ".hidden-storages")) {
             for(int i = 1; i <= maxStorages; i++) {
                 if(Main.HiddenStorageConfiguration.playerData.getPlayerConfig().contains("players." + Owner.getUniqueId() + ".hidden-storages." + i)) {
@@ -109,7 +137,15 @@ public class HiddenStorage implements Comparable<HiddenStorage> {
     }
 
     public static int NextAvailableId(OfflinePlayer p) {
-        int maxStorages = Permissions.getPermissionNumber(p.getPlayer(), "hiddenstorage.set.maximum");
+        int maxStorages = 0;
+        if(p.isOnline()) {
+            maxStorages = Permissions.getPermissionNumber(p.getPlayer(), "hiddenstorage.set.maximum");
+            if(maxStorages == -1) {
+                maxStorages = Main.HiddenStorageConfiguration.MaximumHiddenStorages;
+            }
+        } else{
+            maxStorages = HiddenStorageManager.GetByOwner(p).size();
+        }
         if(maxStorages == -1) {
             maxStorages = Main.HiddenStorageConfiguration.MaximumHiddenStorages;
         }
@@ -119,6 +155,10 @@ public class HiddenStorage implements Comparable<HiddenStorage> {
             }
         }
         return -1;
+    }
+
+    public int GetUsedHiddenStorages() {
+        return HiddenStorageManager.GetByOwner(Owner).size();
     }
 
     public boolean EqualsOwner(Player p) {

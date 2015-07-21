@@ -1,9 +1,11 @@
 package de.KaskadekingDE.HiddenStorage.Classes;
 
 import de.KaskadekingDE.HiddenStorage.Classes.HiddenStorage.HiddenStorage;
+import de.KaskadekingDE.HiddenStorage.Main;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
@@ -78,5 +80,17 @@ public class Helper {
         if(appendWorld)
             result += " World: " + loc.getWorld().getName();
         return result;
+    }
+
+    public static double GetPrice(Player p) {
+        if(!Main.HiddenStorageConfiguration.UseVault) return 0;
+        double price = Main.HiddenStorageConfiguration.Price;
+        int discount = Permissions.getPermissionNumber(p, "hiddenstorage.set.discount");
+        if(discount == -1) discount = 0;
+        if(discount != 0) {
+            int temp = 100 - discount;
+            price = price * temp / 100.0;
+        }
+        return price;
     }
 }

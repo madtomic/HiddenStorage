@@ -1,6 +1,7 @@
 package de.KaskadekingDE.HiddenStorage.Classes.HiddenStorage.ChestManager;
 
 import de.KaskadekingDE.HiddenStorage.Classes.HiddenStorage.HiddenStorage;
+import de.KaskadekingDE.HiddenStorage.Main;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -92,5 +93,20 @@ public class HiddenStorageManager {
                 result.add(hs);
         }
         return result;
+    }
+
+    public static List<HiddenStorage> GetUsedBoughtStorages(Player owner) {
+        List<HiddenStorage> result = new ArrayList<HiddenStorage>();
+        for(HiddenStorage hs: hiddenStorageList) {
+            if(hs == null || hs.StorageLocation == null)
+                continue;
+            if(hs.EqualsOwner(owner) && hs.BoughtChest)
+                result.add(hs);
+        }
+        return result;
+    }
+
+    public static int TotalBoughtStorages(Player p) {
+        return Main.HiddenStorageConfiguration.playerData.getPlayerConfig().getInt("players." + p.getUniqueId() + ".bought-chests", 0);
     }
 }
