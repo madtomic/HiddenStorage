@@ -131,8 +131,8 @@ public class HiddenStorageListener implements Listener {
             p.sendMessage("§a[§bHiddenStorage§a] §eThis region is protected! You can't set here a hidden storage.");
             return false;
         }
-        String price = Main.Economy.format(Main.HiddenStorageConfiguration.Price);
         if(Main.HiddenStorageConfiguration.UseVault && HiddenStorageManager.GetUsedBoughtStorages(p).size() >= HiddenStorageManager.TotalBoughtStorages(p) && Main.Economy.getBalance(p) < Helper.GetPrice(p)) {
+            String price = Main.Economy.format(Main.HiddenStorageConfiguration.Price);
             String balance = Main.Economy.format(Main.Economy.getBalance(p));
             p.sendMessage("§a[§bHiddenStorage§a] §cA hidden storage costs " + price + ". You only have " + balance);
             return false;

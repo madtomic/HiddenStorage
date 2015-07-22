@@ -2,11 +2,11 @@
 
 Make any block to a hidden storage.
 
-Coming soon on Spigot ;)
+[You can find this plugin on Spigot](https://www.spigotmc.org/resources/hiddenstorage.9779/ "HiddenStorage - SpigotMC")
 
 Version
 ----
-0.4 Alpha
+0.4.1 Alpha
 License
 ----
 MIT
